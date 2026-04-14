@@ -1,26 +1,14 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from sklearn.datasets import load_iris
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, PolynomialFeatures
 from sklearn.metrics import confusion_matrix, accuracy_score
-from matplotlib.backends.backend_pdf import PdfPages
 
 def main():
-    # 1. Load Iris Dataset and prepare for 4 categories
-    print("Loading dataset...")
-    iris = load_iris()
-    X, y = iris.data, iris.target
-    
-    # The original Iris dataset has 3 classes. 
-    # To meet the PRD requirement of 4 categories and a 4x4 confusion matrix,
-    # we will create a synthetic 4th class by sampling and adding noise to class 2.
-    np.random.seed(42)
-    X_extra = X[y == 2][:30] + np.random.normal(0, 0.5, size=(30, X.shape[1]))
-    y_extra = np.full(30, 3) # Class 3 is the 4th category
-    
-    X = np.vstack((X, X_extra))
-    y = np.concatenate((y, y_extra))
+    # 1. Load Iris Dataset with 4 categories from CSV
+    print("Loading dataset from data/iris_dataset.csv...")
+    data = np.loadtxt('data/iris_dataset.csv', delimiter=',', skiprows=1)
+    X, y = data[:, :-1], data[:, -1].astype(int)
     
     # 2. Split data: 80% Training, 20% Testing
     print("Splitting data (80% train, 20% test)...")
@@ -92,51 +80,37 @@ def main():
     print(f"Accuracy: {acc:.4f}")
     print("Confusion Matrix:\n", cm)
     
-    # 5. Generate PDF Report
-    pdf_filename = 'biu-ds26-ex01.pdf'
-    print(f"Generating PDF report: {pdf_filename} ...")
+    # 5. Generate PNG Reports
+    print("Generating PNG reports...")
     
-    with PdfPages(pdf_filename) as pdf:
-        # Page 1: Summary Report
-        fig = plt.figure(figsize=(8, 6))
-        fig.clf()
-        fig.text(0.1, 0.8, "Iris Classification Report", fontsize=18, weight='bold')
-        fig.text(0.1, 0.7, "Model Type: Linear Classification with MSE Loss", fontsize=12)
-        fig.text(0.1, 0.6, "Data Split: 80% Training, 20% Testing", fontsize=12)
-        fig.text(0.1, 0.5, "Classes: 4 (0, 1, 2 from original Iris + 3 synthetic)", fontsize=12)
-        fig.text(0.1, 0.4, f"Final Test Accuracy: {acc * 100:.2f}%", fontsize=14, weight='bold')
-        fig.text(0.1, 0.3, f"Final MSE Loss: {mse_history[-1]:.4f}", fontsize=12)
-        pdf.savefig(fig)
-        plt.close()
-        
-        # Page 2: Convergence Graph
-        fig2 = plt.figure(figsize=(8, 6))
-        plt.plot(mse_history, color='blue', linewidth=2)
-        plt.title('Convergence Graph (MSE over Iterations)')
-        plt.xlabel('Epoch / Iteration')
-        plt.ylabel('Mean Squared Error (MSE)')
-        plt.grid(True)
-        pdf.savefig(fig2)
-        plt.close()
-        
-        # Page 3: Confusion Matrix
-        fig3, ax = plt.subplots(figsize=(6, 6))
-        cax = ax.matshow(cm, cmap=plt.cm.Blues)
-        fig3.colorbar(cax)
-        
-        # Add numbers to the matrix blocks
-        for i in range(4):
-            for j in range(4):
-                ax.text(j, i, str(cm[i, j]), va='center', ha='center',
-                        color="white" if cm[i, j] > cm.max()/2. else "black")
-                
-        plt.title('Confusion Matrix (4x4)', pad=20)
-        plt.xlabel('Predicted Label')
-        plt.ylabel('True Label')
-        ax.set_xticks(range(4))
-        ax.set_yticks(range(4))
-        pdf.savefig(fig3)
-        plt.close()
+    # Convergence Graph
+    fig2 = plt.figure(figsize=(8, 6))
+    plt.plot(mse_history, color='blue', linewidth=2)
+    plt.title('Convergence Graph (MSE over Iterations)')
+    plt.xlabel('Epoch / Iteration')
+    plt.ylabel('Mean Squared Error (MSE)')
+    plt.grid(True)
+    plt.savefig('convergence_graph.png')
+    plt.close()
+    
+    # Confusion Matrix
+    fig3, ax = plt.subplots(figsize=(6, 6))
+    cax = ax.matshow(cm, cmap=plt.cm.Blues)
+    fig3.colorbar(cax)
+    
+    # Add numbers to the matrix blocks
+    for i in range(4):
+        for j in range(4):
+            ax.text(j, i, str(cm[i, j]), va='center', ha='center',
+                    color="white" if cm[i, j] > cm.max()/2. else "black")
+            
+    plt.title('Confusion Matrix (4x4)', pad=20)
+    plt.xlabel('Predicted Label')
+    plt.ylabel('True Label')
+    ax.set_xticks(range(4))
+    ax.set_yticks(range(4))
+    plt.savefig('confusion_matrix.png')
+    plt.close()
 
     print("Done!")
 
